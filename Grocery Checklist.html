@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grocery Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper: #FBFAF6;
+    --surface: #FFFFFF;
+    --ink: #1B1E18;
+    --ink-soft: #5C6157;
+    --ink-faint: #8A8F82;
+    --line: #E7E4DA;
+    --green: #2F7A4D;
+    --green-soft: #E6F0E8;
+    --rm: #1B1E18;
+    --shadow: 0 1px 0 rgba(27,30,24,.04);
+    --bar-track: #ECE9DF;
+    --sans: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: "Space Grotesk", system-ui, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16180F;
+      --surface: #1F2217;
+      --ink: #ECEBE0;
+      --ink-soft: #A7AC9A;
+      --ink-faint: #7A7F6E;
+      --line: #2E3122;
+      --green: #6FBE8A;
+      --green-soft: #22301F;
+      --rm: #ECEBE0;
+      --bar-track: #2A2D1F;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16180F;
+    --surface: #1F2217;
+    --ink: #ECEBE0;
+    --ink-soft: #A7AC9A;
+    --ink-faint: #7A7F6E;
+    --line: #2E3122;
+    --green: #6FBE8A;
+    --green-soft: #22301F;
+    --rm: #ECEBE0;
+    --bar-track: #2A2D1F;
+    --shadow: none;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 150px); height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.4;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--surface);
+    z-index: 20;
+  }
+
+  /* ---- Sticky basket header ---- */
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px 12px;
+  }
+  .topbar-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .title {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -.01em;
+    margin: 0;
+  }
+  .title span { color: var(--ink-faint); font-weight: 500; }
+  .reset {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .reset:active { background: var(--green-soft); }
+
+  .tally {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 10px;
+    font-family: var(--mono);
+  }
+  .tally .got { font-size: 26px; font-weight: 700; color: var(--green); letter-spacing: -.02em; }
+  .tally .of { font-size: 14px; color: var(--ink-faint); font-weight: 500; }
+  .tally .count {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .bar {
+    margin-top: 8px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bar-track);
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--green);
+    border-radius: 999px;
+    transition: width .25s ease;
+  }
+
+  /* ---- Lists ---- */
+  main { padding: 6px 12px 40px; max-width: 640px; margin: 0 auto; }
+  .cat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 20px 6px 8px;
+  }
+  .cat h2 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0;
+    letter-spacing: .01em;
+  }
+  .cat .csum { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+
+  .item {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color .12s ease, background .12s ease;
+  }
+  .item:active { border-color: var(--green); }
+
+  .box {
+    width: 24px; height: 24px;
+    border: 2px solid var(--ink-faint);
+    border-radius: 7px;
+    margin-top: 1px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .box svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 3.2; fill: none; opacity: 0; transition: opacity .1s ease; }
+
+  .name { font-size: 15px; font-weight: 500; color: var(--ink); }
+  .meta { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+  .note { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+  .price { text-align: right; font-family: var(--mono); white-space: nowrap; }
+  .price .sub { font-size: 15px; font-weight: 600; color: var(--rm); }
+  .price .unit { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
+  /* checked state */
+  .item.done { background: var(--paper); }
+  .item.done .box { background: var(--green); border-color: var(--green); }
+  .item.done .box svg { opacity: 1; }
+  .item.done .name { text-decoration: line-through; text-decoration-color: var(--ink-faint); color: var(--ink-soft); }
+  .item.done .name, .item.done .meta, .item.done .note, .item.done .price .sub { opacity: .62; }
+
+  footer {
+    margin: 10px auto 0;
+    max-width: 640px;
+    padding: 16px 18px 30px;
+    color: var(--ink-faint);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  footer b { color: var(--ink-soft); font-family: var(--mono); font-weight: 600; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1 class="title">Grocery run <span>· 29 items</span></h1>
+      <button class="reset" id="reset">Clear ticks</button>
+    </div>
+    <div class="tally">
+      <span class="got" id="got">RM0.00</span>
+      <span class="of" id="of">/ RM383.75</span>
+      <span class="count" id="count">0 of 29 in basket</span>
+    </div>
+    <div class="bar"><i id="fill"></i></div>
+  </header>
+
+  <main id="list"></main>
+
+  <footer>
+    Checkout total is <b>RM383.75</b> — that buys full retail packs and bottles.
+    Actual recipe usage works out to about <b>RM262.05</b>; the rest is pantry stock you keep.
+    Water excluded (tap/filtered). Ticks are saved on this device.
+  </footer>
+
+<script>
+  const DATA = [
+    ["Meat & Poultry", [
+      ["Frozen NZ Lamb Shoulder", "Buy 2 × 1 kg pack / cut", "70.00", "RM35.00/kg", "For 2 kg (merged from list)"],
+      ["Frozen NZ Beef Rib Eye", "Buy 2 × 1 kg pack / steaks", "140.00", "RM70.00/kg", "For 2 kg (merged from list)"],
+      ["Frozen Chicken Wing / Drummet", "Buy 1 × 1 kg pack", "15.50", "RM15.50/kg", "2 kg pack ~RM29"],
+    ]],
+    ["Tofu & Mushrooms", [
+      ["Tofu (Tauhu Lembut / Putih)", "Buy 2 × 350–400g pack", "5.60", "RM2.80 ea", "2 packs to reach ~700g"],
+      ["White Jade Mushroom (White Shimeji)", "Buy 1 × 150g pack", "2.90", "RM2.90 ea", "Sold as White Shimeji / Bunapi-shimeji"],
+    ]],
+    ["Fresh Produce & Eggs", [
+      ["Tomatoes (Ripe Large)", "Buy 1 × 500g pack (~3–4 pcs)", "3.80", "RM3.80 ea", "Need ~2 large (~400g)"],
+      ["Spring Onion / Green Onion (Daun Bawang)", "Buy 1 × 100g bunch (~4–5 stalks)", "2.20", "RM2.20 ea", "4 stalks + garnish"],
+      ["Garlic (Bawang Putih)", "Buy 1 × 250g pack", "3.50", "RM3.50 ea", "2 cloves + blend portion"],
+      ["Ginger (Halia)", "Buy 1 × 200g pack", "3.20", "RM3.20 ea", "Sliced + blend portion"],
+      ["Shallots / Red Onions (Bawang Merah)", "Buy 1 × 500g pack", "4.50", "RM4.50 ea", "Rose shallots / bawang merah kecil"],
+      ["Chicken Eggs (Grade A/B)", "Buy 1 × 10-egg tray", "6.50", "RM6.50 ea", "Need 3 eggs"],
+      ["Fresh Coriander (Daun Ketumbar)", "Buy 1 × 50g bunch", "2.00", "RM2.00 ea", "Garnish — optional"],
+    ]],
+    ["Sauces & Oils", [
+      ["Oyster Sauce (Sos Tiram)", "Buy 1 × 500g bottle", "6.80", "RM6.80 ea", "1 tbsp + marinade"],
+      ["Light Soy Sauce (Kicap Cair)", "Buy 1 × 330ml bottle", "4.90", "RM4.90 ea", "2 tbsp + splash for mushroom"],
+      ["Sweet Soy Sauce (Kicap Manis)", "Buy 1 × 330ml bottle", "5.50", "RM5.50 ea", "ABC / Habhal's Kipas Udang"],
+      ["Black Pepper Sauce (Sos Lada Hitam)", "Buy 1 × 340g bottle", "6.90", "RM6.90 ea", "Kimball / Life / Maggi"],
+      ["Worcestershire Sauce", "Buy 1 × 290ml bottle", "13.50", "RM13.50 ea", "Lea & Perrins (Halal)"],
+      ["Pure Honey (Madu)", "Buy 1 × 350g bottle", "16.50", "RM16.50 ea", "Standard supermarket honey"],
+      ["Coconut Oil (Minyak Kelapa)", "Buy 1 × 500ml bottle", "18.90", "RM18.90 ea", "Cooking / virgin coconut oil"],
+      ["Sesame Oil (Minyak Bijan)", "Buy 1 × 150ml bottle", "7.50", "RM7.50 ea", "Finishing drizzle"],
+      ["Cooking Oil (Minyak Masak)", "Buy 1 × 1 kg bottle", "7.20", "RM7.20 ea", "Standard palm oil, pan frying"],
+    ]],
+    ["Spices & Dry Goods", [
+      ["Corn Starch / Corn Flour (Tepung Jagung)", "Buy 1 × 400g pack", "3.20", "RM3.20 ea", "1 tbsp + slurry thickening"],
+      ["Black Pepper (Lada Hitam)", "Buy 1 × 45g bottle", "5.50", "RM5.50 ea", "½ tsp — ground or coarse"],
+      ["White Pepper Powder (Lada Sulah)", "Buy 1 × 45g bottle", "5.50", "RM5.50 ea", "To taste"],
+      ["Paprika Powder (Serbuk Paprika)", "Buy 1 × 40g bottle", "6.50", "RM6.50 ea", "McCormick / Hexa"],
+      ["Dried Rosemary Leaves", "Buy 1 × 25g bottle", "6.50", "RM6.50 ea", "For lamb/beef seasoning"],
+      ["Chicken Stock Powder (Serbuk Pati Ayam)", "Buy 1 × 120g pack", "4.80", "RM4.80 ea", "1 tsp — Maggi / Knorr"],
+      ["White Sugar (Gula Pasir)", "Buy 1 × 1 kg pack", "2.85", "RM2.85 ea", "1 tsp"],
+      ["Cooking Salt (Garam)", "Buy 1 × 400g pack", "1.50", "RM1.50 ea", "Pinch / to taste"],
+    ]],
+  ];
+
+  const TOTAL = 383.75;
+  const KEY = "grocery-checklist-v1";
+  const CHECK = '<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>';
+
+  let state = {};
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) state = JSON.parse(saved) || {};
+  } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  const list = document.getElementById("list");
+  let idx = 0;
+  const rows = [];
+
+  DATA.forEach(([cat, items]) => {
+    const head = document.createElement("div");
+    head.className = "cat";
+    const catSum = items.reduce((a, it) => a + parseFloat(it[2]), 0);
+    head.innerHTML = '<h2>' + cat + '</h2><span class="csum">RM' + catSum.toFixed(2) + '</span>';
+    list.appendChild(head);
+
+    items.forEach((it) => {
+      const [name, meta, sub, unit, note] = it;
+      const id = "i" + idx++;
+      const row = document.createElement("div");
+      row.className = "item";
+      row.dataset.id = id;
+      row.dataset.sub = sub;
+      row.innerHTML =
+        '<div class="box">' + CHECK + '</div>' +
+        '<div><div class="name">' + name + '</div>' +
+        '<div class="meta">' + meta + '</div>' +
+        '<div class="note">' + note + '</div></div>' +
+        '<div class="price"><div class="sub">RM' + sub + '</div><div class="unit">' + unit + '</div></div>';
+      if (state[id]) row.classList.add("done");
+      row.addEventListener("click", () => toggle(row));
+      list.appendChild(row);
+      rows.push(row);
+    });
+  });
+
+  function toggle(row) {
+    const id = row.dataset.id;
+    const now = !row.classList.contains("done");
+    row.classList.toggle("done", now);
+    state[id] = now;
+    save();
+    render();
+  }
+
+  function render() {
+    let got = 0, n = 0;
+    rows.forEach(r => {
+      if (state[r.dataset.id]) { got += parseFloat(r.dataset.sub); n++; }
+    });
+    document.getElementById("got").textContent = "RM" + got.toFixed(2);
+    document.getElementById("of").textContent = "/ RM" + TOTAL.toFixed(2);
+    document.getElementById("count").textContent = n + " of " + rows.length + " in basket";
+    document.getElementById("fill").style.width = (got / TOTAL * 100) + "%";
+  }
+
+  document.getElementById("reset").addEventListener("click", () => {
+    state = {};
+    save();
+    rows.forEach(r => r.classList.remove("done"));
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
